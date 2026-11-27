@@ -1,29 +1,35 @@
 name: TeslaLogger
-version: "2026.7.1"
+version: "2026.11.1"
 slug: teslalogger
-description: TeslaLogger Home Assitant Add-on
+description: TeslaLogger for Home Assistant
 arch:
   - amd64
   - aarch64
-  - armv7
 startup: application
 boot: auto
-ingress: true
-ingress_port: 5000
-ingress_stream: true
+init: false
+ingress: false
+webui: "http://[HOST]:[PORT:80]/admin/"
 panel_icon: mdi:car-electric
 panel_title: TeslaLogger
 homeassistant: "2024.6.0"
 ports:
-  "8888/tcp": null
-map:
-  - addon_config:rw
-  - ssl:rw
+  "80/tcp": 8888
+  "5000/tcp": 5010
+ports_description:
+  "80/tcp": TeslaLogger Admin UI (open http://<Home Assistant IP>:8888/admin/)
+  "5000/tcp": TeslaLogger API for external clients (Home Assistant host port 5010)
 options:
-  TZ: "Europe/Berlin"
-  DB_PASSWORD: "teslalogger"
-  GRAFANA_URL: "http://core-grafana:3000"
+  TZ: Europe/Berlin
+  DB_SERVER: core-mariadb
+  DB_DATABASE: teslalogger
+  DB_USER: teslalogger
+  DB_PASSWORD: teslalogger
 schema:
   TZ: str
-  DB_PASSWORD: str
-  GRAFANA_URL: str
+  DB_SERVER: str
+  DB_DATABASE: str
+  DB_USER: str
+  DB_PASSWORD: password
+map:
+  - addon_config:rw

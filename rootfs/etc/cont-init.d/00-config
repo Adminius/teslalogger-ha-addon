@@ -1,0 +1,36 @@
+#!/bin/bash
+set -euo pipefail
+
+mkdir -p /run/s6/container_environment
+read_option() {
+  jq -r --arg key "$1" --arg default "$2" '.[$key] // $default' /data/options.json
+}
+write_env() {
+  local key="$1" value="$2"
+  printf '%s' "$value" > "/run/s6/container_environment/$key"
+}
+
+write_env TZ "$(read_option TZ Europe/Berlin)"
+write_env DB_SERVER "$(read_option DB_SERVER core-mariadb)"
+write_env DB_DATABASE "$(read_option DB_DATABASE teslalogger)"
+write_env DB_USER "$(read_option DB_USER teslalogger)"
+write_env DB_PASSWORD "$(read_option DB_PASSWORD '')"
+
+# Keep TeslaLogger data and generated exports across add-on upgrades/rebuilds.
+mkdir -p /config/data /config/backup /config/invoices
+mkdir -p /etc/teslalogger/data /etc/teslalogger/backup /etc/teslalogger/Debug/net8.0/tesla_invoices
+for pair in \
+  "/etc/teslalogger/data:/config/data" \
+  "/etc/teslalogger/backup:/config/backup" \
+  "/etc/teslalogger/Debug/net8.0/tesla_invoices:/config/invoices"; do
+  source_path="${pair%%:*}"
+  target_path="${pair#*:}"
+  if [ ! -L "$source_path" ]; then
+    if [ -d "$source_path" ]; then cp -a "$source_path/." "$target_path/"; rm -rf "$source_path"; fi
+    ln -s "$target_path" "$source_path"
+  fi
+done
+
+# The upstream PHP UI expects the compose service name for the API. Both services
+# run in this add-on container, so route that hostname to the local API instead.
+find /var/www/html -type f \( -name '*.php' -o -name '*.js' \) -exec sed -i 's#http://teslalogger:5000#http://127.0.0.1:5000#g' {} +
