@@ -20,13 +20,37 @@ for pair in \
   "/etc/teslalogger/data:/config/data" \
   "/etc/teslalogger/backup:/config/backup" \
   "/etc/teslalogger/Debug/net8.0/tesla_invoices:/config/invoices"; do
-  source_path="${pair%%:*}"
-  target_path="${pair#*:}"
+  IFS=: read -r source_path target_path <<< "$pair"
   if [ ! -L "$source_path" ]; then
     if [ -d "$source_path" ]; then cp -a "$source_path/." "$target_path/"; rm -rf "$source_path"; fi
     ln -s "$target_path" "$source_path"
   fi
 done
+
+# Both add-ons map Home Assistant's /share folder, like the original Docker volumes.
+grafana_share=/share/teslalogger/grafana
+mkdir -p "$grafana_share/dashboards" "$grafana_share/plugins" "$grafana_share/provisioning/dashboards"
+link_shared_directory() {
+  local source_path="$1" target_path="$2"
+  mkdir -p "$target_path"
+  if [ -L "$source_path" ] && [ "$(readlink "$source_path")" = "$target_path" ]; then
+    return
+  fi
+  if [ -L "$source_path" ]; then
+    rm -f "$source_path"
+  elif [ -d "$source_path" ]; then
+    cp -a "$source_path/." "$target_path/"
+    rm -rf "$source_path"
+  elif [ -e "$source_path" ]; then
+    rm -f "$source_path"
+  fi
+  mkdir -p "$(dirname "$source_path")"
+  ln -s "$target_path" "$source_path"
+}
+link_shared_directory /var/lib/grafana/dashboards "$grafana_share/dashboards"
+link_shared_directory /var/lib/grafana/plugins "$grafana_share/plugins"
+mkdir -p /etc/grafana/provisioning
+link_shared_directory /etc/grafana/provisioning/dashboards "$grafana_share/provisioning/dashboards"
 
 # The upstream PHP UI expects the compose service name for the API. Both services
 # run in this add-on container, so route that hostname to the local API instead.

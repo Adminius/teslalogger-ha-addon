@@ -1,0 +1,11 @@
+#!/command/with-contenv bash
+set -euo pipefail
+
+provider="/share/teslalogger/grafana/provisioning/dashboards/sample.yaml"
+while true; do
+  if [ -f "$provider" ] && grep -q '/var/lib/grafana/dashboards' "$provider"; then
+    sed -i 's#/var/lib/grafana/dashboards#/share/teslalogger/grafana/dashboards#g' "$provider"
+    echo "Adjusted TeslaLogger Grafana dashboard provider to the shared Home Assistant path."
+  fi
+  sleep 2
+done

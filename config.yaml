@@ -1,5 +1,5 @@
 name: TeslaLogger
-version: "2026.11.7"
+version: "2026.11.8"
 slug: teslalogger
 description: TeslaLogger for Home Assistant
 arch:
@@ -29,3 +29,4 @@ schema:
   GRAFANA_HOST: str
 map:
   - addon_config:rw
+  - share:rw

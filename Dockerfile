@@ -32,7 +32,7 @@ RUN php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')" \
     && cp /tmp/upstream-php.ini "/etc/php/${php_version}/apache2/php.ini" \
     && rm -f /tmp/upstream-php.ini \
     && chown -R www-data:www-data /var/www/html \
-    && chmod +x /run.sh /usr/local/bin/teslalogger-init-db /etc/cont-init.d/00-config /etc/services.d/teslalogger/run /etc/services.d/grafana-alias/run /etc/services.d/webserver/run
+    && chmod +x /run.sh /usr/local/bin/teslalogger-init-db /etc/cont-init.d/00-config /etc/services.d/teslalogger/run /etc/services.d/grafana-alias/run /etc/services.d/grafana-share-compat/run /etc/services.d/webserver/run
 
 ENV S6_KEEP_ENV=1
 EXPOSE 80 5000
