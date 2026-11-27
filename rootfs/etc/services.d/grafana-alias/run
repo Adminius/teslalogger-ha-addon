@@ -1,0 +1,25 @@
+#!/command/with-contenv bash
+set -euo pipefail
+
+grafana_host="$(jq -r '.GRAFANA_HOST // "a0d7b954-grafana"' /data/options.json)"
+warned=false
+
+while true; do
+  grafana_ip="$(getent ahostsv4 "$grafana_host" | awk 'NR == 1 { print $1; exit }' || true)"
+  if [ -n "$grafana_ip" ]; then
+    current_ip="$(awk '/# teslalogger-grafana-alias$/ { print $1; exit }' /etc/hosts)"
+    if [ "$current_ip" != "$grafana_ip" ]; then
+      hosts_tmp="$(mktemp /run/hosts.XXXXXX)"
+      awk '!/# teslalogger-grafana-alias$/' /etc/hosts > "$hosts_tmp"
+      printf '%s grafana # teslalogger-grafana-alias\n' "$grafana_ip" >> "$hosts_tmp"
+      cat "$hosts_tmp" > /etc/hosts
+      rm -f "$hosts_tmp"
+      echo "Grafana hostname alias configured: grafana -> $grafana_host ($grafana_ip)"
+    fi
+    warned=false
+  elif [ "$warned" != true ]; then
+    echo "Waiting for Grafana host '$grafana_host' to resolve before mapping TeslaLogger's grafana hostname."
+    warned=true
+  fi
+  sleep 5
+done

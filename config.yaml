@@ -1,5 +1,5 @@
 name: TeslaLogger
-version: "2026.11.6"
+version: "2026.11.7"
 slug: teslalogger
 description: TeslaLogger for Home Assistant
 arch:
@@ -22,8 +22,10 @@ ports_description:
 options:
   TZ: Europe/Berlin
   DBConnectionstring: "Server=core-mariadb;Port=3306;Database=teslalogger;Uid=teslalogger;Password=teslalogger;CharSet=utf8mb4;"
+  GRAFANA_HOST: a0d7b954-grafana
 schema:
   TZ: str
   DBConnectionstring: password
+  GRAFANA_HOST: str
 map:
   - addon_config:rw
