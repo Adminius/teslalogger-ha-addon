@@ -22,7 +22,7 @@ RUN set -eu; \
     sed -ri 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf; \
     rm -rf /tmp/s6 /var/lib/apt/lists/*
 
-COPY --from=runtime /etc/teslalogger/sqlschema/sqlschema.sql /usr/share/teslalogger/sqlschema.sql
+RUN mkdir -p /usr/share/teslalogger && cp /etc/teslalogger/sqlschema/sqlschema.sql /usr/share/teslalogger/sqlschema.sql
 COPY --from=webserver /var/www/html/ /var/www/html/
 COPY --from=webserver /usr/local/etc/php/php.ini /tmp/upstream-php.ini
 COPY rootfs/ /
