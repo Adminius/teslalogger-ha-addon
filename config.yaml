@@ -1,5 +1,5 @@
 name: TeslaLogger
-version: "2026.11.4"
+version: "2026.11.5"
 slug: teslalogger
 description: TeslaLogger for Home Assistant
 arch:

@@ -9,4 +9,5 @@ if [ -z "$DBConnectionstring" ]; then
 fi
 export DBConnectionstring
 
+/usr/local/bin/teslalogger-init-db
 exec /run.sh

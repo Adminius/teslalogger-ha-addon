@@ -1,0 +1,107 @@
+#!/command/with-contenv bash
+set -euo pipefail
+
+schema_file=/usr/share/teslalogger/sqlschema.sql
+client_file="$(mktemp /run/teslalogger-db.XXXXXX.cnf)"
+trap 'rm -f "$client_file"' EXIT
+
+if [ ! -r "$schema_file" ]; then
+  echo "TeslaLogger SQL schema missing: $schema_file" >&2
+  exit 1
+fi
+
+# Parse the ADO.NET connection string without putting the password in argv or logs.
+python3 - "$client_file" <<'PY'
+import os
+import sys
+
+connection = os.environ.get("DBConnectionstring", "")
+if not connection:
+    raise SystemExit("DBConnectionstring is empty")
+
+parts = []
+current = []
+quote = None
+escaped = False
+for char in connection:
+    if escaped:
+        current.append(char)
+        escaped = False
+    elif quote and char == "\\":
+        escaped = True
+    elif quote:
+        if char == quote:
+            quote = None
+        else:
+            current.append(char)
+    elif char in ("'", '"'):
+        quote = char
+    elif char == ";":
+        parts.append("".join(current))
+        current = []
+    else:
+        current.append(char)
+if quote:
+    raise SystemExit("Unclosed quote in DBConnectionstring")
+parts.append("".join(current))
+
+values = {}
+for part in parts:
+    if "=" not in part:
+        continue
+    key, value = part.split("=", 1)
+    key = " ".join(key.strip().lower().split())
+    value = value.strip()
+    if key in ("server", "host", "data source", "datasource", "address"):
+        values["host"] = value
+    elif key == "port":
+        values["port"] = value
+    elif key in ("database", "initial catalog"):
+        values["database"] = value
+    elif key in ("uid", "user id", "user", "username"):
+        values["user"] = value
+    elif key in ("pwd", "password"):
+        values["password"] = value
+
+for required in ("host", "database", "user"):
+    if not values.get(required):
+        raise SystemExit(f"DBConnectionstring is missing required field: {required}")
+values.setdefault("port", "3306")
+values.setdefault("password", "")
+
+def option(value):
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\r", "\\r") + '"'
+
+with open(sys.argv[1], "w", encoding="utf-8") as config:
+    config.write("[client]\nprotocol=tcp\n")
+    for key in ("host", "port", "database", "user", "password"):
+        config.write(f"{key}={option(values[key])}\n")
+os.chmod(sys.argv[1], 0o600)
+PY
+
+ready=false
+for attempt in $(seq 1 60); do
+  if table_count="$(mariadb --defaults-extra-file="$client_file" --connect-timeout=5 --batch --skip-column-names -e 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE();' 2>/dev/null)"; then
+    ready=true
+    break
+  fi
+  sleep 5
+done
+
+if [ "$ready" != true ]; then
+  echo "Could not connect to the configured MariaDB after 5 minutes; TeslaLogger startup is stopped." >&2
+  exit 1
+fi
+
+if ! [[ "$table_count" =~ ^[0-9]+$ ]]; then
+  echo "Could not determine the number of tables in the TeslaLogger database." >&2
+  exit 1
+fi
+
+if [ "$table_count" -eq 0 ]; then
+  echo "TeslaLogger database is empty; importing sqlschema.sql."
+  mariadb --defaults-extra-file="$client_file" --connect-timeout=10 < "$schema_file"
+  echo "TeslaLogger database schema imported."
+else
+  echo "TeslaLogger database already contains $table_count table(s); schema import skipped to protect existing data."
+fi
