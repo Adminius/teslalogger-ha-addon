@@ -1,3 +1,12 @@
 #!/command/with-contenv bash
-set -e
+set -euo pipefail
+
+# Pass the exact option name expected by TeslaLogger into its process environment.
+# The second key keeps installations with the previous add-on option working.
+DBConnectionstring="$(jq -r '.DBConnectionstring // .DB_CONNECTIONSTRING // empty' /data/options.json)"
+if [ -z "$DBConnectionstring" ]; then
+  DBConnectionstring='Server=core-mariadb;Port=3306;Database=teslalogger;Uid=teslalogger;Password=teslalogger;CharSet=utf8mb4;'
+fi
+export DBConnectionstring
+
 exec /run.sh
