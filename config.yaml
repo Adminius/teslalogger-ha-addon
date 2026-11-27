@@ -1,5 +1,5 @@
 name: TeslaLogger
-version: "2026.11.8"
+version: "2026.11.9"
 slug: teslalogger
 description: TeslaLogger for Home Assistant
 arch:
@@ -30,3 +30,4 @@ schema:
 map:
   - addon_config:rw
   - share:rw
+

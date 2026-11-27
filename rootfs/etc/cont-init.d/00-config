@@ -54,4 +54,5 @@ link_shared_directory /etc/grafana/provisioning/dashboards "$grafana_share/provi
 
 # The upstream PHP UI expects the compose service name for the API. Both services
 # run in this add-on container, so route that hostname to the local API instead.
-find /var/www/html -type f \( -name '*.php' -o -name '*.js' \) -exec sed -i 's#http://teslalogger:5000#http://127.0.0.1:5000#g' {} +
+find /var/www/html -type f \( -name '*.php' -o -name '*.js' \) -exec sed -i 's#http://teslalogger:#http://127.0.0.1:#g' {} +
+
