@@ -21,9 +21,9 @@ ports_description:
   "5000/tcp": TeslaLogger API for external clients (Home Assistant host port 5010)
 options:
   TZ: Europe/Berlin
-  DB_CONNECTIONSTRING: "Server=core-mariadb;Port=3306;Database=teslalogger;Uid=teslalogger;Password=teslalogger;CharSet=utf8mb4;"
+  DBConnectionstring: "Server=core-mariadb;Port=3306;Database=teslalogger;Uid=teslalogger;Password=teslalogger;CharSet=utf8mb4;"
 schema:
   TZ: str
-  DB_CONNECTIONSTRING: password
+  DBConnectionstring: password
 map:
   - addon_config:rw

@@ -11,7 +11,7 @@ write_env() {
 }
 
 write_env TZ "$(read_option TZ Europe/Berlin)"
-write_env DB_CONNECTIONSTRING "$(read_option DB_CONNECTIONSTRING 'Server=core-mariadb;Port=3306;Database=teslalogger;Uid=teslalogger;Password=teslalogger;CharSet=utf8mb4;')"
+write_env DBConnectionstring "$(read_option DBConnectionstring 'Server=core-mariadb;Port=3306;Database=teslalogger;Uid=teslalogger;Password=teslalogger;CharSet=utf8mb4;')"
 
 # Keep TeslaLogger data and generated exports across add-on upgrades/rebuilds.
 mkdir -p /config/data /config/backup /config/invoices
